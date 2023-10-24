@@ -1,0 +1,102 @@
+from app.css_parser import CSSParser, style
+from app.html_parser import HTMLParser, transform, tree_to_list, print_tree
+from app.internet import SCHEMES, request, resolve_url
+from app.layout import HEIGHT, DocumentLayout
+from app.selector import cascade_priority
+from app.text import Text, Element
+
+STYLE_SHEET_PATH = "../files/browser.css"
+SCROLL_STEP = 100
+CHROME_PX = 100
+
+
+class Tab:
+    def __init__(self):
+        self.history = []
+        self.url = ""
+        self.scroll = 0
+
+        with open(STYLE_SHEET_PATH) as file:
+            self.default_style_sheet = CSSParser(file.read()).parse()
+
+        self.display_list = None
+        self.document = None
+        self.nodes = None
+        self.focus = None
+
+    def load(self, url):
+        headers, body = request(url)
+        self.focus = None
+        self.url = url
+        self.history.append(url)
+
+        if url.startswith(SCHEMES[4]):
+            self.nodes = HTMLParser(transform(body)).parse()
+        else:
+            self.nodes = HTMLParser(body).parse()
+
+        rules = self.extend_rules(url)
+        style(self.nodes, sorted(rules, key=cascade_priority))
+        self.document = DocumentLayout(self.nodes)
+        self.document.layout()
+        self.display_list = []
+        self.document.paint(self.display_list)
+
+    def extend_rules(self, url):
+        rules = self.default_style_sheet.copy()
+        links = [node.attributes["href"]
+                 for node in tree_to_list(self.nodes, [])
+                 if isinstance(node, Element)
+                 and node.tag == "link"
+                 and "href" in node.attributes
+                 and node.attributes.get("rel") == "stylesheet"]
+        for link in links:
+            try:
+                headers, body = request(resolve_url(link, url))
+            except:
+                continue
+            rules.extend(CSSParser(body).parse())
+
+        return rules
+
+    # Show document on canvas.
+    def draw(self, canvas):
+        for cmd in self.display_list:
+            if cmd.top > self.scroll + HEIGHT - CHROME_PX:
+                continue
+            if cmd.bottom < self.scroll:
+                continue
+            cmd.execute(self.scroll - CHROME_PX, canvas)
+
+    def scroll_down(self):
+        max_y = self.document.height - (HEIGHT - CHROME_PX)
+        self.scroll = min(self.scroll + SCROLL_STEP, max_y)
+
+    def scroll_up(self):
+        self.scroll = max(self.scroll - SCROLL_STEP, 0)
+
+    def click(self, x, y):
+        y += self.scroll
+        # Find links and elements at click location.
+        objs = [obj for obj in tree_to_list(self.document, [])
+                if obj.x <= x < obj.x + obj.width
+                and obj.y < y <= obj.y + obj.height]
+        if not objs:
+            return
+
+        # Get url at click location and load it.
+        element = objs[-1].node
+        while element:
+            if isinstance(element, Text):
+                pass
+            elif element.tag == "a" and "href" in element.attributes:
+                url = resolve_url(element.attributes["href"], self.url)
+                return self.load(url)
+            element = element.parent
+
+    def go_back(self):
+        if len(self.history) > 1:
+            #self.load(self.history[-2])
+            self.history.pop()
+            back = self.history.pop()
+            self.load(back)
