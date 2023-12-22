@@ -214,7 +214,7 @@ class TextLayout:
         size = int(float(self.node.style["font-size"][:-2]) * .75)
         self.font = get_font(size, weight, style)
 
-        # Do not set self.y!!!
+        # Do not set self.y!
         self.width = self.font.measure(self.word)
 
         if self.previous:
