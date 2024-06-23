@@ -17,14 +17,14 @@ BLOCK_ELEMENTS = [
 
 class BlockLayout:
     def __init__(self, node, parent, previous):
-        self.node = node
-        self.parent = parent
-        self.previous = previous
-        self.children = []
         self.x = None
         self.y = None
         self.width = None
         self.height = None
+        self.node = node
+        self.parent = parent
+        self.previous = previous
+        self.children = []
 
     def layout(self):
         previous = None
@@ -35,18 +35,14 @@ class BlockLayout:
                 proximate = BlockLayout(child, self, previous)
             self.children.append(proximate)
             previous = proximate
-
         self.width = self.parent.width
         self.x = self.parent.x
-
         if self.previous:
             self.y = self.previous.y + self.previous.height
         else:
             self.y = self.parent.y
-
         for child in self.children:
             child.layout()
-
         self.height = sum([child.height for child in self.children])
 
     def paint(self, display_list):
@@ -70,18 +66,14 @@ class InlineLayout:
     def layout(self):
         self.width = self.parent.width
         self.x = self.parent.x
-
         if self.previous:
             self.y = self.previous.y + self.previous.height
         else:
             self.y = self.parent.y
-
         self.new_line()
         self.recurse(self.node)
-
         for line in self.children:
             line.layout()
-
         self.height = sum([line.height for line in self.children])
 
     def recurse(self, node):
@@ -107,7 +99,6 @@ class InlineLayout:
             style = "roman"
         size = int(float(node.style["font-size"][:-2]) * .75)
         font = get_font(size, weight, style)
-
         for word in node.text.split():
             w = font.measure(word)
             if self.cursor_x + w > self.width - H_STEP:
@@ -124,24 +115,22 @@ class InlineLayout:
             x2, y2 = self.x + self.width, self.y + self.height
             rect = DrawRect(self.x, self.y, x2, y2, bgcolor)
             display_list.append(rect)
-
         for child in self.children:
             child.paint(display_list)
 
 
 class DocumentLayout:
     def __init__(self, node):
+        self.node = node
+        self.children = []
         self.x = None
         self.y = None
         self.width = None
         self.height = None
-        self.node = node
-        self.children = []
 
     def layout(self):
         child = BlockLayout(self.node, self, None)
         self.children.append(child)
-
         self.width = WIDTH - 2 * H_STEP
         self.x = H_STEP
         self.y = V_STEP
@@ -154,38 +143,32 @@ class DocumentLayout:
 
 class LineLayout:
     def __init__(self, node, parent, previous):
-        self.node = node
-        self.parent = parent
-        self.previous = previous
-        self.children = []
         self.x = None
         self.y = None
         self.width = None
         self.height = None
+        self.node = node
+        self.parent = parent
+        self.previous = previous
+        self.children = []
 
     def layout(self):
         self.width = self.parent.width
         self.x = self.parent.x
-
         if self.previous:
             self.y = self.previous.y + self.previous.height
         else:
             self.y = self.parent.y
-
         for word in self.children:
             word.layout()
-
         if not self.children:
             self.height = 0
             return
-
-        max_ascent = max([word.font.metrics("ascent")
-                          for word in self.children])
+        max_ascent = max([word.font.metrics("ascent") for word in self.children])
         baseline = self.y + LINE_SPACE_MULT * max_ascent
         for word in self.children:
             word.y = baseline - word.font.metrics("ascent")
-        max_descent = max([word.font.metrics("descent")
-                           for word in self.children])
+        max_descent = max([word.font.metrics("descent") for word in self.children])
         self.height = LINE_SPACE_MULT * (max_ascent + max_descent)
 
     def paint(self, display_list):
@@ -213,7 +196,6 @@ class TextLayout:
             style = "roman"
         size = int(float(self.node.style["font-size"][:-2]) * .75)
         self.font = get_font(size, weight, style)
-
         # Do not set self.y!
         self.width = self.font.measure(self.word)
 
@@ -222,7 +204,6 @@ class TextLayout:
             self.x = self.previous.x + space + self.previous.width
         else:
             self.x = self.parent.x
-
         self.height = self.font.metrics("linespace")
 
     def paint(self, display_list):
@@ -235,7 +216,6 @@ def get_font(size, weight, slant):
     if key not in FONTS:
         font = tkinter.font.Font(size=size, weight=weight, slant=slant)
         FONTS[key] = font
-
     return FONTS[key]
 
 

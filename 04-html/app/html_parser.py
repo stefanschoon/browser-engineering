@@ -28,7 +28,6 @@ class HTMLParser:
                 text = ""
             elif char == ">":
                 in_tag = False
-                # Check if in head.
                 if text == self.IMPLICIT_TAGS[0]:
                     in_body = False
                 elif text == "/" + self.IMPLICIT_TAGS[0]:

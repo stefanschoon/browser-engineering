@@ -36,10 +36,8 @@ class HTMLParser:
                 text = ""
             else:
                 text += char
-
         if not in_tag and text:
             self.add_text(unescape_entities(text))
-
         return self.finish()
 
     def get_attributes(self, text):
@@ -54,7 +52,6 @@ class HTMLParser:
                 attributes[key.lower()] = value
             else:
                 attributes[attr_val_pair.lower()] = ""
-
         return tag, attributes
 
     def add_text(self, text):
@@ -69,12 +66,10 @@ class HTMLParser:
         tag, attributes = self.get_attributes(tag)
         if tag.startswith("!"):
             return
-
         self.implicit_tags(tag)
         if tag.startswith("/"):
             if len(self.unfinished) == 1:
                 return
-
             node = self.unfinished.pop()
             parent = self.unfinished[-1]
             parent.children.append(node)
@@ -105,12 +100,10 @@ class HTMLParser:
     def finish(self):
         if len(self.unfinished) == 0:
             self.add_tag("html")
-
         while len(self.unfinished) > 1:
             node = self.unfinished.pop()
             parent = self.unfinished[-1]
             parent.children.append(node)
-
         return self.unfinished.pop()
 
 
@@ -133,5 +126,4 @@ def tree_to_list(tree, lst):
     lst.append(tree)
     for child in tree.children:
         tree_to_list(child, lst)
-
     return lst

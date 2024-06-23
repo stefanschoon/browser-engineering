@@ -7,7 +7,7 @@ from app.layout import HEIGHT, DocumentLayout
 from app.selector import cascade_priority
 from app.text import Text, Element
 
-STYLE_SHEET_PATH = "./files/browser.css"
+STYLE_SHEET_PATH = "../files/browser.css"
 SCROLL_STEP = 100
 CHROME_PX = 100
 
