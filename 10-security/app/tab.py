@@ -37,20 +37,20 @@ class Tab:
     def load(self, url, request_body=None):
         self.focus = None
         self.url = url  # Top level url
-        headers, body, view_source = request(url, self.url, request_body)
+        body, view_source = request(url, self.url, request_body)
         self.history.append(url)
         if url.startswith(SCHEMES[4]):
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()
-        self.add_allowed_origins(headers)
+        self.add_allowed_origins(response_headers)
         self.rules = self.extend_rules(url)
 
     # Support for the Content-Security-Policy header
-    def add_allowed_origins(self, headers):
+    def add_allowed_origins(self, response_headers):
         self.allowed_origins = None
-        if "content-security-policy" in headers:
-            csp = headers["content-security-policy"].split()
+        if "content-security-policy" in response_headers:
+            csp = response_headers["content-security-policy"].split()
             if len(csp) > 0 and csp[0] == "default-src":
                 self.allowed_origins = csp[1:]
 
@@ -133,11 +133,12 @@ class Tab:
         self._scroll(event.delta)
 
     def _scroll(self, step):
+        y_min = 0
         y_max = self.document.height - (self.height - CHROME_PX)
         if y_max > 0:
             self.scroll -= step
-            if self.scroll < 0:
-                self.scroll = 0
+            if self.scroll < y_min:
+                self.scroll = y_min
             elif self.scroll > y_max:
                 self.scroll = y_max
 

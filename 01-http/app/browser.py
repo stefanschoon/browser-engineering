@@ -1,5 +1,5 @@
 def load(url):
-    headers, body, view_source = url.request()
+    body, view_source = url.request()
     show(body, view_source)
 
 

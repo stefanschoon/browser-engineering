@@ -68,7 +68,7 @@ class JSContext:
         full_url = resolve_url(url, self.tab.url)
         if not self.tab.allowed_request(full_url):  # Resolve relative URLs to know if they're allowed.
             raise Exception("Cross-origin XHR blocked by CSP")
-        headers, out = request(full_url, self.tab.url, payload=body)
+        response_headers, out = request(full_url, self.tab.url, payload=body)
         if url_origin(full_url) != url_origin(self.tab.url):
             raise Exception("Cross-origin XHR request not allowed")
         return out

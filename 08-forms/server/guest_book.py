@@ -11,21 +11,21 @@ def handle_connection(conx):
     assert method in ["GET", "POST"]
 
     # Parse request headers:
-    headers = {}
+    request_headers = {}
     for line in request:
         line = line.decode(CODEC)
         if line == '\r\n':
             break
         header, value = line.split(":", 1)
-        headers[header.lower()] = value.strip()
+        request_headers[header.lower()] = value.strip()
 
-    if 'content-length' in headers:
-        length = int(headers['content-length'])
+    if 'content-length' in request_headers:
+        length = int(request_headers['content-length'])
         body = request.read(length).decode(CODEC)
     else:
         body = None
 
-    status, body = do_request(method, url, headers, body)
+    status, body = do_request(method, url, request_headers, body)
 
     response = "HTTP/1.0 {}\r\n".format(status)
     response += "Content-Length: {}\r\n".format(len(body.encode(CODEC)))
@@ -35,7 +35,7 @@ def handle_connection(conx):
     conx.close()
 
 
-def do_request(method, url, headers, body):
+def do_request(method, url, request_headers, body):
     if method == "GET" and url == "/":
         return "200 OK", show_comments()
     elif method == "POST" and url == "/add":

@@ -18,7 +18,7 @@ def request(url, payload=None):
         scheme, url = url.split(":", 1)
         scheme = scheme.lower()
 
-    headers, body = {}, ""
+    response_headers, body = {}, ""
     if scheme == SCHEMES[0] or scheme == SCHEMES[1]:
         url = url[2:]  # Remove the two initiating slashes.
 
@@ -35,14 +35,14 @@ def request(url, payload=None):
         except ValueError:
             port = 80 if scheme == SCHEMES[0] else 443
 
-        headers, body = connect(scheme, host, port, path, payload)
+        response_headers, body = connect(scheme, host, port, path, payload)
     elif scheme == SCHEMES[2]:
         body = open_file(url[2:])  # Remove the two initiating slashes.
     elif scheme == SCHEMES[3]:
         content_type, data = url.split(",", 1)
         body = handle_data(content_type, data)
 
-    return headers, body, view_source
+    return body, view_source
 
 
 def connect(scheme, host, port, path, payload):
@@ -86,21 +86,21 @@ def connect(scheme, host, port, path, payload):
     assert status == "200", "{}: {}".format(status, explanation)
 
     # Put response headers into map.
-    headers = {}
+    response_headers = {}
     while True:
         line = response.readline().decode(CODEC)
         if line == "\r\n":
             break
         header, value = line.split(":", 1)
         # Headers are case-insensitive and whites-paces are insignificant.
-        headers[header.lower()] = value.strip()
-    #assert "transfer-encoding" not in headers
-    #assert "content-encoding" not in headers
-    #print("Response headers:" + "\r\n" + str(headers) + "\r\n")
+        response_headers[header.lower()] = value.strip()
+    #assert "transfer-encoding" not in response_headers
+    #assert "content-encoding" not in response_headers
+    #print("Response headers:" + "\r\n" + str(response_headers) + "\r\n")
 
     # Support for HTTP compression:
-    if "content-encoding" in headers and "gzip" in headers["content-encoding"]:
-        if "transfer-encoding" in headers and "chunked" in headers["transfer-encoding"]:
+    if "content-encoding" in response_headers and "gzip" in response_headers["content-encoding"]:
+        if "transfer-encoding" in response_headers and "chunked" in response_headers["transfer-encoding"]:
             body = read_chunks(response)
         else:
             body = response.read()
@@ -111,7 +111,7 @@ def connect(scheme, host, port, path, payload):
 
     soc.close()
 
-    return headers, body
+    return response_headers, body
 
 
 def read_chunks(response):

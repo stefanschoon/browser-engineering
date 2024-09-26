@@ -29,7 +29,7 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        headers, body, view_source = request(url)
+        body, view_source = request(url)
         if url.startswith(SCHEMES[4]):
             self.nodes = HTMLParser(transform(body)).parse()
         else:
@@ -63,11 +63,12 @@ class Browser:
         self._scroll(event.delta)
 
     def _scroll(self, step):
+        y_min = 0
         y_max = self.document.height - self.height
-        if y_max > 0:
+        if y_max > y_min:
             self.scroll -= step
-            if self.scroll < 0:
-                self.scroll = 0
+            if self.scroll < y_min:
+                self.scroll = y_min
             elif self.scroll > y_max:
                 self.scroll = y_max
             self.draw()

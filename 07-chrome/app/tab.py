@@ -29,7 +29,7 @@ class Tab:
     def load(self, url):
         self.focus = None
         self.url = url
-        headers, body, view_source = request(self.url)
+        body, view_source = request(self.url)
         self.history.append(self.url)
         if self.url.startswith(SCHEMES[4]):
             self.nodes = HTMLParser(transform(body)).parse()
@@ -48,7 +48,7 @@ class Tab:
 
         for link in links:
             try:
-                headers, body = request(resolve_url(link, url))
+                response_headers, body = request(resolve_url(link, url))
             except:
                 continue
             rules.extend(CSSParser(body).parse())
@@ -83,11 +83,12 @@ class Tab:
         self._scroll(event.delta)
 
     def _scroll(self, step):
+        y_min = 0
         y_max = self.document.height - (self.height - CHROME_PX)
         if y_max > 0:
             self.scroll -= step
-            if self.scroll < 0:
-                self.scroll = 0
+            if self.scroll < y_min:
+                self.scroll = y_min
             elif self.scroll > y_max:
                 self.scroll = y_max
 
