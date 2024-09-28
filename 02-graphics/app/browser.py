@@ -72,8 +72,8 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        body, view_source = url.request()
-        self.text = lex(body, view_source)
+        body = url.request()
+        self.text = lex(body, url.view_source)
 
     def configure(self, event):
         self.height = event.height
@@ -81,6 +81,9 @@ class Browser:
         self.draw()
 
     def draw(self):
+        y_max = self.display_list[-1][1] - self.height
+        if y_max < self.scroll:
+            self.scroll = y_max + V_STEP
         self.canvas.delete("all")
         for x, y, c in self.display_list:
             if y > self.scroll + self.height:
@@ -100,11 +103,11 @@ class Browser:
 
     def _scroll(self, step):
         y_min = 0
-        y_max = self.display_list[-1][1] - self.height
+        y_max = self.display_list[-1][1] - self.height + V_STEP
         if y_max > y_min:
             self.scroll -= step
             if self.scroll < y_min:
                 self.scroll = y_min
-            elif self.scroll > y_max + V_STEP:
-                self.scroll = y_max + V_STEP
+            elif self.scroll > y_max:
+                self.scroll = y_max
             self.draw()

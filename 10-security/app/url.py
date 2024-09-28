@@ -88,8 +88,9 @@ def connect(scheme, host, port, path, payload, top_level_url):
             req += "Cookie: {}\r\n".format(cookie)
     #print("Request headers:" + "\r\n" + str(req) + "\r\n")
 
-    # Send payload after headers:
+    # Add payload after headers:
     req += "\r\n" + (payload or "")  # End header block with "\r\n".
+
     soc.send(req.encode(CODEC))  # Encode header block.
 
     #response = soc.makefile("r", encoding=CODEC, newline="\r\n")

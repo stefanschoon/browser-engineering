@@ -3,26 +3,26 @@ import ssl
 import gzip
 
 CODEC = "UTF-8"
-SCHEMES = ["http", "https", "file", "data", "view-source", ]
+SCHEMES = ["http", "https", "file", "data", "view-source", "about", ]
+SPECIAL = ["blank"]
 PORT_HTTP = 80
 PORT_HTTPS = 443
 
 
 class URL:
     def __init__(self, url):
-        self.scheme, self.url = url.split(":", 1)
-        self.scheme = self.scheme.lower()
-        assert self.scheme in SCHEMES, "Unknown scheme {}".format(self.scheme)
         self.host = None
         self.port = None
         self.path = None
+        self.scheme, self.url = url.split(":", 1)
+        self.scheme = self.scheme.lower()
+        self.view_source = False
+        assert self.scheme in SCHEMES, "Unknown scheme {}".format(self.scheme)
 
     def request(self):
-        view_source = False
-
         # If scheme is "view-source", split again.
         if self.scheme == SCHEMES[4]:
-            view_source = True
+            self.view_source = True
             self.scheme, self.url = self.url.split(":", 1)
             self.scheme = self.scheme.lower()
 
@@ -49,8 +49,11 @@ class URL:
         elif self.scheme == SCHEMES[3]:
             content_type, data = self.url.split(",", 1)
             body = self.handle_data(content_type, data)
+        else:
+            self.scheme = SCHEMES[5]
+            self.url = SPECIAL[0]
 
-        return body, view_source
+        return body
 
     def connect(self):
         soc = socket.socket(

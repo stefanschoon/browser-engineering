@@ -73,7 +73,7 @@ def connect(scheme, host, port, path, payload):
         length = len(payload.encode(CODEC))
         req += "Content-Length: {}\r\n".format(length)
 
-    # Send payload after headers:
+    # Add payload after headers:
     req += "\r\n" + (payload or "")  # End header block with "\r\n".
 
     soc.send(req.encode(CODEC))  # Encode header block.

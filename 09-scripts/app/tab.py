@@ -88,6 +88,9 @@ class Tab:
 
     # Show document on canvas.
     def draw(self, canvas):
+        y_max = self.document.height - (self.height - CHROME_PX)
+        if y_max < self.scroll:
+            self.scroll = y_max
         for cmd in self.display_list:
             if cmd.top > self.scroll + self.height - CHROME_PX:
                 continue

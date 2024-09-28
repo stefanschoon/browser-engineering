@@ -43,6 +43,9 @@ class Browser:
 
     # Show document on canvas.
     def draw(self):
+        y_max = self.display_list[-1][1] - self.height
+        if y_max < self.scroll:
+            self.scroll = y_max + V_STEP
         self.canvas.delete("all")
         for x, y, c, font in self.display_list:
             # Skip characters outside the viewing window.
@@ -63,11 +66,11 @@ class Browser:
 
     def _scroll(self, step):
         y_min = 0
-        y_max = self.display_list[-1][1] - self.height
+        y_max = self.display_list[-1][1] - self.height + V_STEP
         if y_max > y_min:
             self.scroll -= step
             if self.scroll < y_min:
                 self.scroll = y_min
-            elif self.scroll > y_max + V_STEP:
-                self.scroll = y_max + V_STEP
+            elif self.scroll > y_max:
+                self.scroll = y_max
             self.draw()

@@ -1,6 +1,6 @@
 def load(url):
-    body, view_source = url.request()
-    show(body, view_source)
+    body = url.request()
+    show(body, url.view_source)
 
 
 # Show document on canvas.

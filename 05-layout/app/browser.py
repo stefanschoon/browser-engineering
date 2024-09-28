@@ -45,6 +45,9 @@ class Browser:
 
     # Show document on canvas.
     def draw(self):
+        y_max = self.document.height - self.height
+        if y_max < self.scroll:
+            self.scroll = y_max
         self.canvas.delete("all")
         for cmd in self.display_list:
             if cmd.top > self.scroll + self.height:

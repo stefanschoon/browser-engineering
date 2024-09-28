@@ -69,7 +69,7 @@ def connect(scheme, host, port, path):
     req += "Accept-Encoding: gzip\r\n"
     req += "\r\n"  # End header block with "\r\n".
     #print("Request headers:" + "\r\n" + req + "\r\n")
-    
+
     soc.send(req.encode(CODEC))  # Encode header block.
 
     #response = soc.makefile("r", encoding=CODEC, newline="\r\n")

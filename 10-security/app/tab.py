@@ -108,13 +108,15 @@ class Tab:
 
     # Show document on canvas.
     def draw(self, canvas):
+        y_max = self.document.height - (self.height - CHROME_PX)
+        if y_max < self.scroll:
+            self.scroll = y_max
         for cmd in self.display_list:
             if cmd.top > self.scroll + self.height - CHROME_PX:
                 continue
             if cmd.bottom < self.scroll:
                 continue
             cmd.execute(self.scroll - CHROME_PX, canvas)
-
         if self.focus:
             obj = [obj for obj in tree_to_list(self.document, [])
                    if obj.node == self.focus][0]
