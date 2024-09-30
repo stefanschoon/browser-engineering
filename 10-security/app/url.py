@@ -62,18 +62,18 @@ def connect(scheme, host, port, path, payload, top_level_url):
 
     # Build request headers:
     method = "POST" if payload else "GET"
-    req = (
+    request_headers = (
             "{} {} HTTP/1.1\r\n".format(method, path) +
             "Host: {}\r\n".format(host) +
             "Connection: close\r\n" +
             "User-Agent: haw-browser\r\n"
     )
-    req += "Accept-Encoding: gzip\r\n"
+    request_headers += "Accept-Encoding: gzip\r\n"
 
     # If there is a POST request, the Content-Length header is mandatory:
     if payload:
         length = len(payload.encode(CODEC))
-        req += "Content-Length: {}\r\n".format(length)
+        request_headers += "Content-Length: {}\r\n".format(length)
 
     # Send cookie:
     if host in COOKIE_JAR:
@@ -85,13 +85,13 @@ def connect(scheme, host, port, path, payload, top_level_url):
                 top_level_host, _ = top_level_host.split(":", 1)  # Remove port.
             allow_cookie = (host == top_level_host or method == "GET")
         if allow_cookie:
-            req += "Cookie: {}\r\n".format(cookie)
-    #print("Request headers:" + "\r\n" + str(req) + "\r\n")
+            request_headers += "Cookie: {}\r\n".format(cookie)
+    #print("Request headers:" + "\r\n" + str(request_headers) + "\r\n")
 
     # Add payload after headers:
-    req += "\r\n" + (payload or "")  # End header block with "\r\n".
+    request_headers += "\r\n" + (payload or "")  # End header block with "\r\n".
 
-    soc.send(req.encode(CODEC))  # Encode header block.
+    soc.send(request_headers.encode(CODEC))  # Encode header block.
 
     #response = soc.makefile("r", encoding=CODEC, newline="\r\n")
     response = soc.makefile("rb", newline="\r\n")

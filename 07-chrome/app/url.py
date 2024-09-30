@@ -60,17 +60,17 @@ def connect(scheme, host, port, path):
 
     # Build request headers:
     method = "GET"
-    req = (
+    request_headers = (
             "{} {} HTTP/1.1\r\n".format(method, path) +
             "Host: {}\r\n".format(host) +
             "Connection: close\r\n" +
             "User-Agent: haw-browser\r\n"
     )
-    req += "Accept-Encoding: gzip\r\n"
-    req += "\r\n"  # End header block with "\r\n".
-    #print("Request headers:" + "\r\n" + req + "\r\n")
+    request_headers += "Accept-Encoding: gzip\r\n"
+    request_headers += "\r\n"  # End header block with "\r\n".
+    #print("Request headers:" + "\r\n" + request_headers + "\r\n")
 
-    soc.send(req.encode(CODEC))  # Encode header block.
+    soc.send(request_headers.encode(CODEC))  # Encode header block.
 
     #response = soc.makefile("r", encoding=CODEC, newline="\r\n")
     response = soc.makefile("rb", newline="\r\n")
