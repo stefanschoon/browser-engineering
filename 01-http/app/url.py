@@ -26,17 +26,17 @@ class URL:
         self.scheme, self.url = url.split(":", 1)
         self.scheme = self.scheme.lower()
         self.view_source = False
-        #assert self.scheme in SCHEMES, "Unknown scheme {}".format(self.scheme)
+        assert self.scheme in [scheme.value for scheme in Scheme], "Unknown scheme '{}'.".format(self.scheme)
 
     def request(self):
         # If scheme is "view-source", split again.
-        if self.scheme == Scheme.VIEW_SOURCE:
+        if self.scheme == Scheme.VIEW_SOURCE.value:
             self.view_source = True
             self.scheme, self.url = self.url.split(":", 1)
             self.scheme = self.scheme.lower()
 
         response_headers, body = {}, ""
-        if self.scheme == Scheme.HTTP or self.scheme == Scheme.HTTPS:
+        if self.scheme == Scheme.HTTP.value or self.scheme == Scheme.HTTPS.value:
             self.url = self.url[2:]  # Remove the two initiating slashes.
 
             try:
@@ -50,21 +50,17 @@ class URL:
                 self.host, self.port = self.host.split(":", 1)
                 self.port = int(self.port)
             except ValueError:
-                self.port = PORT_HTTP if self.scheme == Scheme.HTTP else PORT_HTTPS
+                self.port = PORT_HTTP if self.scheme == Scheme.HTTP.value else PORT_HTTPS
 
             response_headers, body = self.connect()
-        elif self.scheme == Scheme.FILE:
+        elif self.scheme == Scheme.FILE.value:
             body = self.open_file()
-        elif self.scheme == Scheme.DATA:
+        elif self.scheme == Scheme.DATA.value:
             content_type, data = self.url.split(",", 1)
             body = self.handle_data(content_type, data)
-        elif self.scheme == Scheme.ABOUT:
-            if self.url == Special.BLANK:
-                pass
-        else:
-            # Show about:blank
-            self.scheme = Scheme.ABOUT
-            self.url = Special.BLANK
+        elif self.scheme == Scheme.ABOUT.value:
+            if self.url == Special.BLANK.value:
+                print("{}:{}".format(self.scheme, self.url))
 
         return body
 
@@ -77,7 +73,7 @@ class URL:
         soc.connect((self.host, self.port))
 
         # Encrypted connection:
-        if self.scheme == Scheme.HTTPS:
+        if self.scheme == Scheme.HTTPS.value:
             ctx = ssl.create_default_context()
             soc = ctx.wrap_socket(soc, server_hostname=self.host)
 

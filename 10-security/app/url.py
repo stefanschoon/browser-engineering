@@ -12,7 +12,7 @@ def request(url, top_level_url, payload=None):
     view_source = False
     scheme, url = url.split(":", 1)
     scheme = scheme.lower()
-    assert scheme in SCHEMES, "Unknown scheme {}".format(scheme)
+    assert scheme in SCHEMES, "Unknown scheme '{}'.".format(scheme)
 
     # If scheme is "view-source", split again.
     if scheme == SCHEMES[4]:
