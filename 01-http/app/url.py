@@ -37,6 +37,7 @@ class URL:
 
         response_headers, body = {}, ""
         if self.scheme == Scheme.HTTP.value or self.scheme == Scheme.HTTPS.value:
+            encrypted = True if self.scheme == Scheme.HTTPS.value else False
             self.url = self.url[2:]  # Remove the two initiating slashes.
 
             try:
@@ -50,9 +51,12 @@ class URL:
                 self.host, self.port = self.host.split(":", 1)
                 self.port = int(self.port)
             except ValueError:
-                self.port = PORT_HTTP if self.scheme == Scheme.HTTP.value else PORT_HTTPS
+                if encrypted:
+                    self.port = PORT_HTTPS
+                else:
+                    self.port = PORT_HTTP
 
-            response_headers, body = self.connect()
+            response_headers, body = self.connect(encrypted)
         elif self.scheme == Scheme.FILE.value:
             body = self.open_file()
         elif self.scheme == Scheme.DATA.value:
@@ -64,7 +68,7 @@ class URL:
 
         return body
 
-    def connect(self):
+    def connect(self, encrypted=False):
         soc = socket.socket(
             family=socket.AF_INET,
             type=socket.SOCK_STREAM,
@@ -73,7 +77,7 @@ class URL:
         soc.connect((self.host, self.port))
 
         # Encrypted connection:
-        if self.scheme == Scheme.HTTPS.value:
+        if encrypted:
             ctx = ssl.create_default_context()
             soc = ctx.wrap_socket(soc, server_hostname=self.host)
 

@@ -3,7 +3,6 @@ import tkinter.font
 
 from app.html_parser import HTMLParser, transform
 from app.layout import V_STEP, H_STEP, Layout
-from app.url import SCHEMES, request
 
 WIDTH, HEIGHT = 800, 600
 SCROLL_STEP = 60
@@ -30,8 +29,8 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        body, view_source = request(url)
-        if url.startswith(SCHEMES[4]):
+        body, view_source = url.request()
+        if view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()

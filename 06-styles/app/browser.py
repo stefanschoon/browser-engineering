@@ -6,7 +6,7 @@ from app.html_parser import HTMLParser, transform, tree_to_list
 from app.layout import WIDTH, HEIGHT, DocumentLayout
 from app.selector import cascade_priority
 from app.text import Element
-from app.url import SCHEMES, request, resolve_url
+from app.url import resolve_url
 
 STYLE_SHEET_PATH = "../files/browser.css"
 SCROLL_STEP = 60
@@ -36,8 +36,8 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        body, view_source = request(url)
-        if url.startswith(SCHEMES[4]):
+        body, view_source = url.request()
+        if view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()
