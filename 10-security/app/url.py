@@ -1,27 +1,40 @@
-import gzip
 import socket
 import ssl
+import gzip
+from enum import Enum
 
 CODEC = "UTF-8"
-SCHEMES = ["http", "https", "file", "data", "view-source", ]
-COOKIE_JAR = {}
+PORT_HTTP = 80
+PORT_HTTPS = 443
 
 
-# Called in Tab.load(),
-def request(url, top_level_url, payload=None):
+class Scheme(Enum):
+    VIEW_SOURCE = "view-source"
+    ABOUT = "about"
+    FILE = "file"
+    DATA = "data"
+    HTTP = "http"
+    HTTPS = "https"
+
+class Special(Enum):
+    BLANK = "blank"
+
+
+def request(url, payload=None):
     view_source = False
     scheme, url = url.split(":", 1)
     scheme = scheme.lower()
-    assert scheme in SCHEMES, "Unknown scheme '{}'.".format(scheme)
+    assert scheme in [scheme.value for scheme in Scheme], "Unknown scheme '{}'.".format(scheme)
 
     # If scheme is "view-source", split again.
-    if scheme == SCHEMES[4]:
+    if scheme == Scheme.VIEW_SOURCE.value:
         view_source = True
         scheme, url = url.split(":", 1)
         scheme = scheme.lower()
 
     response_headers, body = {}, ""
-    if scheme == SCHEMES[0] or scheme == SCHEMES[1]:
+    if scheme == Scheme.HTTP.value or scheme == Scheme.HTTPS.value:
+        encrypted = True if scheme == Scheme.HTTPS.value else False
         url = url[2:]  # Remove the two initiating slashes.
 
         try:
@@ -35,19 +48,22 @@ def request(url, top_level_url, payload=None):
             host, port = host.split(":", 1)
             port = int(port)
         except ValueError:
-            port = 80 if scheme == SCHEMES[0] else 443
+            if encrypted:
+                port = PORT_HTTPS
+            else:
+                port = PORT_HTTP
 
-        response_headers, body = connect(scheme, host, port, path, payload, top_level_url)
-    elif scheme == SCHEMES[2]:
+        response_headers, body = connect(host, port, path, encrypted, payload)
+    elif scheme == Scheme.FILE.value:
         body = open_file(url[2:])  # Remove the two initiating slashes.
-    elif scheme == SCHEMES[3]:
+    elif scheme == Scheme.ABOUT.value:
         content_type, data = url.split(",", 1)
         body = handle_data(content_type, data)
 
     return response_headers, body, view_source
 
 
-def connect(scheme, host, port, path, payload, top_level_url):
+def connect(host, port, path, encrypted, payload):
     soc = socket.socket(
         family=socket.AF_INET,
         type=socket.SOCK_STREAM,
@@ -56,7 +72,7 @@ def connect(scheme, host, port, path, payload, top_level_url):
     soc.connect((host, port))
 
     # Encrypted connection:
-    if scheme == SCHEMES[1]:
+    if encrypted:
         ctx = ssl.create_default_context()
         soc = ctx.wrap_socket(soc, server_hostname=host)
 
@@ -74,19 +90,6 @@ def connect(scheme, host, port, path, payload, top_level_url):
     if payload:
         length = len(payload.encode(CODEC))
         request_headers += "Content-Length: {}\r\n".format(length)
-
-    # Send cookie:
-    if host in COOKIE_JAR:
-        cookie, params = COOKIE_JAR[host]
-        allow_cookie = True
-        if top_level_url and params.get("samesite", "none") == "lax":  # TODO: Why has get() 'none' as 2nd parameter?
-            _, _, top_level_host, _ = top_level_url.split("/", 3)
-            if ":" in top_level_host:
-                top_level_host, _ = top_level_host.split(":", 1)  # Remove port.
-            allow_cookie = (host == top_level_host or method == "GET")
-        if allow_cookie:
-            request_headers += "Cookie: {}\r\n".format(cookie)
-    #print("Request headers:" + "\r\n" + str(request_headers) + "\r\n")
 
     # Add payload after headers:
     request_headers += "\r\n" + (payload or "")  # End header block with "\r\n".
@@ -161,25 +164,3 @@ def open_file(path):
 
 def handle_data(content_type, data):
     return data
-
-
-def resolve_url(url, current):
-    if "://" in url:
-        return url
-    elif url.startswith("/"):
-        scheme, host_path = current.split("://", 1)
-        host, old_path = host_path.split("/", 1)
-        return scheme + "://" + host + url
-    else:
-        directory, _ = current.rsplit("/", 1)
-        while url.startswith("../"):
-            url = url[3:]
-            if directory.count("/") == 2:
-                continue
-            directory, _ = directory.rsplit("/", 1)
-        return directory + "/" + url
-
-
-def url_origin(url):
-    scheme_colon, _, host, _ = url.split("/", 3)
-    return scheme_colon + "//" + host

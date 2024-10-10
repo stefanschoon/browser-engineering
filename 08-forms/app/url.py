@@ -1,25 +1,40 @@
 import socket
 import ssl
 import gzip
+from enum import Enum
 
 CODEC = "UTF-8"
-SCHEMES = ["http", "https", "file", "data", "view-source", ]
+PORT_HTTP = 80
+PORT_HTTPS = 443
+
+
+class Scheme(Enum):
+    VIEW_SOURCE = "view-source"
+    ABOUT = "about"
+    FILE = "file"
+    DATA = "data"
+    HTTP = "http"
+    HTTPS = "https"
+
+class Special(Enum):
+    BLANK = "blank"
 
 
 def request(url, payload=None):
     view_source = False
     scheme, url = url.split(":", 1)
     scheme = scheme.lower()
-    assert scheme in SCHEMES, "Unknown scheme '{}'.".format(scheme)
+    assert scheme in [scheme.value for scheme in Scheme], "Unknown scheme '{}'.".format(scheme)
 
     # If scheme is "view-source", split again.
-    if scheme == SCHEMES[4]:
+    if scheme == Scheme.VIEW_SOURCE.value:
         view_source = True
         scheme, url = url.split(":", 1)
         scheme = scheme.lower()
 
     response_headers, body = {}, ""
-    if scheme == SCHEMES[0] or scheme == SCHEMES[1]:
+    if scheme == Scheme.HTTP.value or scheme == Scheme.HTTPS.value:
+        encrypted = True if scheme == Scheme.HTTPS.value else False
         url = url[2:]  # Remove the two initiating slashes.
 
         try:
@@ -33,19 +48,22 @@ def request(url, payload=None):
             host, port = host.split(":", 1)
             port = int(port)
         except ValueError:
-            port = 80 if scheme == SCHEMES[0] else 443
+            if encrypted:
+                port = PORT_HTTPS
+            else:
+                port = PORT_HTTP
 
-        response_headers, body = connect(scheme, host, port, path, payload)
-    elif scheme == SCHEMES[2]:
+        response_headers, body = connect(host, port, path, encrypted, payload)
+    elif scheme == Scheme.FILE.value:
         body = open_file(url[2:])  # Remove the two initiating slashes.
-    elif scheme == SCHEMES[3]:
+    elif scheme == Scheme.ABOUT.value:
         content_type, data = url.split(",", 1)
         body = handle_data(content_type, data)
 
     return response_headers, body, view_source
 
 
-def connect(scheme, host, port, path, payload):
+def connect(host, port, path, encrypted, payload):
     soc = socket.socket(
         family=socket.AF_INET,
         type=socket.SOCK_STREAM,
@@ -54,7 +72,7 @@ def connect(scheme, host, port, path, payload):
     soc.connect((host, port))
 
     # Encrypted connection:
-    if scheme == SCHEMES[1]:
+    if encrypted:
         ctx = ssl.create_default_context()
         soc = ctx.wrap_socket(soc, server_hostname=host)
 
@@ -146,20 +164,3 @@ def open_file(path):
 
 def handle_data(content_type, data):
     return data
-
-
-def resolve_url(url, current):
-    if "://" in url:
-        return url
-    elif url.startswith("/"):
-        scheme, host_path = current.split("://", 1)
-        host, old_path = host_path.split("/", 1)
-        return scheme + "://" + host + url
-    else:
-        directory, _ = current.rsplit("/", 1)
-        while url.startswith("../"):
-            url = url[3:]
-            if directory.count("/") == 2:
-                continue
-            directory, _ = directory.rsplit("/", 1)
-        return directory + "/" + url
