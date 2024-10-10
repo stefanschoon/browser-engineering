@@ -8,11 +8,28 @@ from app.js_context import JSContext
 from app.layout import DocumentLayout
 from app.selector import cascade_priority
 from app.text import Text, Element
-from app.url import SCHEMES, request, resolve_url
+from app.url import request
 
 STYLE_SHEET_PATH = "../files/browser.css"
 SCROLL_STEP = 60
 CHROME_PX = 100
+
+
+def resolve_url(url, current):
+    if "://" in url:
+        return url
+    elif url.startswith("/"):
+        scheme, host_path = current.split("://", 1)
+        host, old_path = host_path.split("/", 1)
+        return scheme + "://" + host + url
+    else:
+        directory, _ = current.rsplit("/", 1)
+        while url.startswith("../"):
+            url = url[3:]
+            if directory.count("/") == 2:
+                continue
+            directory, _ = directory.rsplit("/", 1)
+        return directory + "/" + url
 
 
 class Tab:
@@ -35,9 +52,9 @@ class Tab:
     def load(self, url, request_body=None):
         self.focus = None
         self.url = url
-        body, view_source = request(self.url, request_body)
+        response_headers, body, view_source = request(self.url, request_body)
         self.history.append(self.url)
-        if self.url.startswith(SCHEMES[4]):
+        if view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()
@@ -52,7 +69,7 @@ class Tab:
 
         self.js = JSContext(self)
         for script in scripts:
-            header, body = request(resolve_url(script, self.url))
+            response_header, body, view_source = request(resolve_url(script, self.url))
             print("Script returned: ", dukpy.evaljs(body))
             try:
                 self.js.run(body)

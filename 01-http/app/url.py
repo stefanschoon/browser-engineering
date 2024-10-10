@@ -7,11 +7,12 @@ CODEC = "UTF-8"
 PORT_HTTP = 80
 PORT_HTTPS = 443
 
+
 class Scheme(Enum):
     VIEW_SOURCE = "view-source"
     ABOUT = "about"
     FILE = "file"
-    DATA = " data"
+    DATA = "data"
     HTTP = "http"
     HTTPS = "https"
 

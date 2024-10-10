@@ -3,14 +3,31 @@ import tkinter.font
 
 from app.css_parser import CSSParser, style
 from app.html_parser import HTMLParser, transform, tree_to_list
-from app.layout import WIDTH, HEIGHT, DocumentLayout
+from app.layout import DocumentLayout
 from app.selector import cascade_priority
 from app.text import Element
-from app.url import resolve_url
 
-STYLE_SHEET_PATH = "../files/browser.css"
+WIDTH, HEIGHT = 800, 600
 SCROLL_STEP = 60
+STYLE_SHEET_PATH = "../files/browser.css"
 BG_COLOR = "white"
+
+
+def resolve_url(url, current):
+    if "://" in url:
+        return url
+    elif url.startswith("/"):
+        scheme, host_path = current.split("://", 1)
+        host, old_path = host_path.split("/", 1)
+        return scheme + "://" + host + url
+    else:
+        directory, _ = current.rsplit("/", 1)
+        while url.startswith("../"):
+            url = url[3:]
+            if directory.count("/") == 2:
+                continue
+            directory, _ = directory.rsplit("/", 1)
+        return directory + "/" + url
 
 
 class Browser:
@@ -36,8 +53,8 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        body, view_source = url.request()
-        if view_source:
+        body = url.request()
+        if url.view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()

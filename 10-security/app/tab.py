@@ -8,11 +8,33 @@ from app.js_context import JSContext
 from app.layout import DocumentLayout
 from app.selector import cascade_priority
 from app.text import Text, Element
-from app.url import SCHEMES, request, resolve_url, url_origin
+from app.url import request
 
 STYLE_SHEET_PATH = "../files/browser.css"
 SCROLL_STEP = 60
 CHROME_PX = 100
+
+
+def resolve_url(url, current):
+    if "://" in url:
+        return url
+    elif url.startswith("/"):
+        scheme, host_path = current.split("://", 1)
+        host, old_path = host_path.split("/", 1)
+        return scheme + "://" + host + url
+    else:
+        directory, _ = current.rsplit("/", 1)
+        while url.startswith("../"):
+            url = url[3:]
+            if directory.count("/") == 2:
+                continue
+            directory, _ = directory.rsplit("/", 1)
+        return directory + "/" + url
+
+
+def url_origin(url):
+    scheme_colon, _, host, _ = url.split("/", 3)
+    return scheme_colon + "//" + host
 
 
 class Tab:
@@ -37,9 +59,9 @@ class Tab:
     def load(self, url, request_body=None):
         self.focus = None
         self.url = url  # Top level url
-        body, view_source = request(url, self.url, request_body)
+        response_headers, body, view_source = request(url, self.url, request_body)
         self.history.append(url)
-        if url.startswith(SCHEMES[4]):
+        if view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()
@@ -71,7 +93,7 @@ class Tab:
             if not self.allowed_request(script_url):
                 print("Blocked script", script, "due to CSP")
                 continue
-            header, body = request(script_url, url)
+            response_header, body, view_source = request(script_url, url)
             print("Script returned: ", dukpy.evaljs(body))
             try:
                 self.js.run(body)
@@ -90,7 +112,7 @@ class Tab:
         for link in links:
             style_url = resolve_url(link, url)
             try:
-                header, body = request(style_url, url)
+                response_header, body, view_source = request(style_url, url)
             except:
                 continue
             rules.extend(CSSParser(body).parse())

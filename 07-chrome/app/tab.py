@@ -3,11 +3,28 @@ from app.html_parser import HTMLParser, transform, tree_to_list, print_tree
 from app.layout import DocumentLayout
 from app.selector import cascade_priority
 from app.text import Text, Element
-from app.url import SCHEMES, request, resolve_url
+from app.url import request
 
 SCROLL_STEP = 60
 CHROME_PX = 100
 STYLE_SHEET_PATH = "../files/browser.css"
+
+
+def resolve_url(url, current):
+    if "://" in url:
+        return url
+    elif url.startswith("/"):
+        scheme, host_path = current.split("://", 1)
+        host, old_path = host_path.split("/", 1)
+        return scheme + "://" + host + url
+    else:
+        directory, _ = current.rsplit("/", 1)
+        while url.startswith("../"):
+            url = url[3:]
+            if directory.count("/") == 2:
+                continue
+            directory, _ = directory.rsplit("/", 1)
+        return directory + "/" + url
 
 
 class Tab:
@@ -29,9 +46,9 @@ class Tab:
     def load(self, url):
         self.focus = None
         self.url = url
-        body, view_source = request(self.url)
+        response_headers, body, view_source = request(self.url)
         self.history.append(self.url)
-        if self.url.startswith(SCHEMES[4]):
+        if view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()

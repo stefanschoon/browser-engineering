@@ -7,11 +7,12 @@ CODEC = "UTF-8"
 PORT_HTTP = 80
 PORT_HTTPS = 443
 
+
 class Scheme(Enum):
     VIEW_SOURCE = "view-source"
     ABOUT = "about"
     FILE = "file"
-    DATA = " data"
+    DATA = "data"
     HTTP = "http"
     HTTPS = "https"
 
@@ -161,19 +162,3 @@ def read_chunks(response):
         response.read(2)
 
     return body
-
-def resolve_url(url, current):
-    if "://" in url:
-        return url
-    elif url.startswith("/"):
-        scheme, host_path = current.split("://", 1)
-        host, old_path = host_path.split("/", 1)
-        return scheme + "://" + host + url
-    else:
-        directory, _ = current.rsplit("/", 1)
-        while url.startswith("../"):
-            url = url[3:]
-            if directory.count("/") == 2:
-                continue
-            directory, _ = directory.rsplit("/", 1)
-        return directory + "/" + url

@@ -28,8 +28,8 @@ class Browser:
         self.canvas.bind("<Configure>", self.configure)
 
     def load(self, url):
-        body, view_source = url.request()
-        if view_source:
+        body = url.request()
+        if url.view_source:
             self.nodes = HTMLParser(transform(body)).parse()
         else:
             self.nodes = HTMLParser(body).parse()

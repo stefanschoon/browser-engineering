@@ -44,7 +44,7 @@ def request(url, top_level_url, payload=None):
         content_type, data = url.split(",", 1)
         body = handle_data(content_type, data)
 
-    return body, view_source
+    return response_headers, body, view_source
 
 
 def connect(scheme, host, port, path, payload, top_level_url):
