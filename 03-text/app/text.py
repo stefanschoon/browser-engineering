@@ -1,5 +1,5 @@
 class Text:
-    def __init__(self, text, parent=None):
+    def __init__(self, text):
         self.text = text
 
     def __repr__(self) -> str:

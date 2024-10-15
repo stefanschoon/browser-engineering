@@ -51,7 +51,7 @@ class Browser:
     def __init__(self):
         self.tokens = None
         self.display_list = None
-        self.scroll = 0
+        self.scroll, self.y_min, self.y_max = 0, 0, 0
         self.height = HEIGHT
         self.window = tkinter.Tk()
         self.window.bind("<Down>", self.scroll_down)
@@ -72,19 +72,20 @@ class Browser:
     def configure(self, event):
         self.height = event.height
         self.display_list = Layout(self.tokens, event.width).display_list
+        if self.display_list:
+            self.y_max = self.display_list[-1][1] - self.height + V_STEP
         self.draw()
 
     def draw(self):
-        y_max = self.display_list[-1][1] - self.height
-        if y_max < self.scroll:
-            self.scroll = y_max + V_STEP
+        if self.y_max < self.scroll:
+            self.scroll = self.y_max
         self.canvas.delete("all")
         for x, y, c, f in self.display_list:
             if y > self.scroll + self.height:
                 continue
             if y + V_STEP < self.scroll:
                 continue
-            self.canvas.create_text(x, y - self.scroll, text=c, font=f)
+            self.canvas.create_text(x, y - self.scroll, text=c, font=f, anchor="nw")
 
     def scroll_down(self, event):
         self._scroll(-SCROLL_STEP)
@@ -96,12 +97,10 @@ class Browser:
         self._scroll(event.delta)
 
     def _scroll(self, step):
-        y_min = 0
-        y_max = self.display_list[-1][1] - self.height + V_STEP
-        if y_max > y_min:
+        if self.y_max > self.y_min:
             self.scroll -= step
-            if self.scroll < y_min:
-                self.scroll = y_min
-            elif self.scroll > y_max:
-                self.scroll = y_max
+            if self.scroll < self.y_min:
+                self.scroll = self.y_min
+            elif self.scroll > self.y_max:
+                self.scroll = self.y_max
             self.draw()

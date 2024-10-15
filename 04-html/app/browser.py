@@ -13,7 +13,7 @@ class Browser:
     def __init__(self):
         self.nodes = None
         self.display_list = None
-        self.scroll = 0
+        self.scroll, self.y_min, self.y_max = 0, 0, 0
         self.height = HEIGHT
         self.window = tkinter.Tk()
         self.window.bind("<Down>", self.scroll_down)
@@ -42,9 +42,8 @@ class Browser:
 
     # Show document on canvas.
     def draw(self):
-        y_max = self.display_list[-1][1] - self.height
-        if y_max < self.scroll:
-            self.scroll = y_max + V_STEP
+        if self.y_max < self.scroll:
+            self.scroll = self.y_max
         self.canvas.delete("all")
         for x, y, c, font in self.display_list:
             # Skip characters outside the viewing window.
@@ -64,12 +63,10 @@ class Browser:
         self._scroll(event.delta)
 
     def _scroll(self, step):
-        y_min = 0
-        y_max = self.display_list[-1][1] - self.height + V_STEP
-        if y_max > y_min:
+        if self.y_max > self.y_min:
             self.scroll -= step
-            if self.scroll < y_min:
-                self.scroll = y_min
-            elif self.scroll > y_max:
-                self.scroll = y_max
+            if self.scroll < self.y_min:
+                self.scroll = self.y_min
+            elif self.scroll > self.y_max:
+                self.scroll = self.y_max
             self.draw()
