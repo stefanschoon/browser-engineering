@@ -29,7 +29,6 @@ class CSSParser:
                 self.i += 1
             else:
                 break
-
         # Assertion to check that 'i' advanced though at least one character.
         assert self.i > start, "Parser did not advanced trough any character"
         return self.s[start:self.i]
@@ -40,7 +39,6 @@ class CSSParser:
         self.literal(":")
         self.whitespace()
         val = self.word()
-
         return prop.lower(), val
 
     def ignore_until(self, chars):
@@ -66,7 +64,6 @@ class CSSParser:
                     self.whitespace()
                 else:
                     break
-
         return pairs
 
     def selector(self):
@@ -77,7 +74,6 @@ class CSSParser:
             descendant = TagSelector(tag.lower())
             out = DescendantSelector(out, descendant)
             self.whitespace()
-
         return out
 
     def parse(self):
@@ -98,7 +94,6 @@ class CSSParser:
                     self.whitespace()
                 else:
                     break
-
         return rules
 
 
@@ -108,14 +103,12 @@ def style(node, rules):
         pairs = CSSParser(node.attributes["style"]).body()
         for prop, val in pairs.items():
             node.style[prop] = val
-
     # Explicit rules override inheritance
     for prop, default_val in INHERITED_PROPERTIES.items():
         if node.parent:
             node.style[prop] = node.parent.style[prop]
         else:
             node.style[prop] = default_val
-
     for selector, body in rules:
         if not selector.matches(node):
             continue
@@ -124,7 +117,6 @@ def style(node, rules):
             if not computed_val:
                 continue
             node.style[prop] = computed_val
-
     for child in node.children:
         style(child, rules)
 
@@ -146,8 +138,6 @@ def handle_percentage(node, val):
         parent_font_size = node.parent.style["font-size"]
     else:
         parent_font_size = INHERITED_PROPERTIES["font-size"]
-
     node_pct = float(val[:-1]) / 100
     parent_px = float(parent_font_size[:-2])
-
     return str(node_pct * parent_px) + "px"

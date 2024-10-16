@@ -136,9 +136,11 @@ class InlineLayout:
             self.size += 2
         elif tag == "big":
             self.size -= 4
-        elif tag == "p" or tag == "h1" or tag == "br":
+        elif tag == "br":
             self.flush()
-            self.cursor_y += V_STEP  # FIXME: Little gap between paragraphs
+        elif tag == "p" or tag == "h1":
+            self.flush()
+            self.cursor_y += V_STEP  # Little gap between paragraphs
 
     def flush(self):
         if not self.line:

@@ -41,7 +41,7 @@ class Tab:
         self.browser = browser
         self.history = []
         self.url = ""
-        self.scroll = 0
+        self.scroll, self.y_min, self.y_max = 0, 0, 0
         with open(STYLE_SHEET_PATH) as file:
             self.default_style_sheet = CSSParser(file.read()).parse()
 
@@ -71,7 +71,6 @@ class Tab:
             except:
                 continue
             rules.extend(CSSParser(body).parse())
-
         return rules
 
     def render(self):
@@ -80,14 +79,14 @@ class Tab:
         style(self.nodes, sorted(self.rules, key=cascade_priority))
         self.document = DocumentLayout(self.nodes, self.width)
         self.document.layout()
+        self.y_max = self.document.height - (self.height - CHROME_PX)
         self.display_list = []
         self.document.paint(self.display_list)
 
     # Show document on canvas.
     def draw(self, canvas):
-        y_max = self.document.height - (self.height - CHROME_PX)
-        if y_max < self.scroll:
-            self.scroll = y_max
+        if self.y_max < self.scroll:
+            self.scroll = self.y_max
         for cmd in self.display_list:
             if cmd.top > self.scroll + self.height - CHROME_PX:
                 continue
@@ -113,14 +112,12 @@ class Tab:
         self._scroll(event.delta)
 
     def _scroll(self, step):
-        y_min = 0
-        y_max = self.document.height - (self.height - CHROME_PX)
-        if y_max > 0:
+        if self.y_max > 0:
             self.scroll -= step
-            if self.scroll < y_min:
-                self.scroll = y_min
-            elif self.scroll > y_max:
-                self.scroll = y_max
+            if self.scroll < self.y_min:
+                self.scroll = self.y_min
+            elif self.scroll > self.y_max:
+                self.scroll = self.y_max
 
     def click(self, x, y):
         y += self.scroll

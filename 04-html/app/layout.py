@@ -57,7 +57,9 @@ class Layout:
             self.size += 2
         elif tag == "big":
             self.size -= 4
-        elif tag == "p" or tag == "h1" or tag == "br":
+        elif tag == "br":
+            self.flush()
+        elif tag == "p" or tag == "h1":
             self.flush()
             self.cursor_y += V_STEP  # Little gap between paragraphs
 
