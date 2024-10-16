@@ -2,7 +2,7 @@ import tkinter
 import tkinter.font
 
 from app.text import Text, Tag
-from app.layout import H_STEP, V_STEP, Layout
+from app.layout import H_STEP, V_STEP, LINE_SPACE_MUL, Layout
 
 WIDTH, HEIGHT = 800, 600
 SCROLL_STEP = 60
@@ -73,7 +73,7 @@ class Browser:
         self.height = event.height
         self.display_list = Layout(self.tokens, event.width).display_list
         if self.display_list:
-            self.y_max = self.display_list[-1][1] - self.height + V_STEP
+            self.y_max = self.display_list[-1][1] - self.height + V_STEP * LINE_SPACE_MUL
         self.draw()
 
     def draw(self):

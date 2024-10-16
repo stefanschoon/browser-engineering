@@ -77,6 +77,7 @@ class Browser:
 
     def configure(self, event):
         self.height = event.height
+        self.display_list = layout(self.text, event.width)
         if self.display_list:
             self.y_max = self.display_list[-1][1] - self.height + V_STEP
         self.draw()

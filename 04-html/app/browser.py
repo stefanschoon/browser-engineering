@@ -2,11 +2,10 @@ import tkinter
 import tkinter.font
 
 from app.html_parser import HTMLParser, transform
-from app.layout import V_STEP, H_STEP, Layout
+from app.layout import V_STEP, H_STEP, LINE_SPACE_MUL, Layout
 
 WIDTH, HEIGHT = 800, 600
 SCROLL_STEP = 60
-LINE_SPACE_MUL = 1.25
 
 
 class Browser:
@@ -18,7 +17,6 @@ class Browser:
         self.window = tkinter.Tk()
         self.window.bind("<Down>", self.scroll_down)
         self.window.bind("<Up>", self.scroll_up)
-        self.window.bind("<MouseWheel>", self.scroll_wheel)
         self.window.bind("<MouseWheel>", self.scroll_wheel)
         self.canvas = tkinter.Canvas(
             self.window,
@@ -38,6 +36,8 @@ class Browser:
     def configure(self, event):
         self.height = event.height
         self.display_list = Layout(self.nodes, event.width).display_list
+        if self.display_list:
+            self.y_max = self.display_list[-1][1] - self.height + V_STEP * LINE_SPACE_MUL
         self.draw()
 
     # Show document on canvas.
