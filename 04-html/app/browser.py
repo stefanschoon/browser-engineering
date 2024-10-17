@@ -37,7 +37,7 @@ class Browser:
         self.height = event.height
         self.display_list = Layout(self.nodes, event.width).display_list
         if self.display_list:
-            self.y_max = self.display_list[-1][1] - self.height + V_STEP * LINE_SPACE_MUL
+            self.y_max = self.display_list[-1][1] - self.height + LINE_SPACE_MUL * V_STEP
         self.draw()
 
     # Show document on canvas.
